@@ -97,6 +97,30 @@ r2-relay [OPTIONS]
   --max-connections <N>     Maximum simultaneous connections [default: 10000]
 ```
 
+## Community relay
+
+There is a public community relay available for anyone to use:
+
+```
+wss://relay.reality2.ai/r2
+```
+
+This relay is untrusted by design — it forwards encrypted bytes and cannot read your data. Use it to get started without setting up your own. You can switch to your own relay at any time.
+
+## Deploy to a VPS
+
+To run your own relay on the internet with automatic HTTPS:
+
+```
+./deploy.sh root@your-server relay.yourdomain.com
+```
+
+This builds the relay, copies it to your server, installs Caddy for automatic TLS, and sets up systemd services. Your relay will be available at `wss://relay.yourdomain.com/r2`.
+
+Requirements: a VPS with a public IP and a domain pointing to it.
+
+A **Dockerfile** is also included for container deployments.
+
 ## For developers
 
 The relay implements the R2-TRANSPORT-RELAY specification. It's a single Rust binary with minimal dependencies (axum, tokio, ed25519-dalek). No R2 protocol crates required — it treats all messages as opaque encrypted bytes.

@@ -1,0 +1,11 @@
+# Caddy reverse proxy with automatic HTTPS
+# Replace relay.reality2.ai with your domain
+#
+# Usage:
+#   caddy run --config Caddyfile
+#
+# Caddy automatically obtains a Let's Encrypt certificate.
+
+relay.reality2.ai {
+    reverse_proxy localhost:21042
+}
