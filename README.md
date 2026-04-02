@@ -1,6 +1,15 @@
-# R2 Relay
+# Relay
 
-The relay connects your devices to each other across the internet. It's part of [Reality2](https://reality2-ai.github.io) — a protocol for private, encrypted communication between your devices.
+<p align="center">
+  <img src="static/relay.svg" width="96" alt="Relay">
+</p>
+
+<p align="center">
+  Your own connectivity, on your own terms.<br>
+  Part of <a href="https://reality2-ai.github.io">Reality2</a>.
+</p>
+
+The relay connects your devices to each other across the internet — without depending on anyone else's servers or services.
 
 **The relay never sees your data.** It forwards encrypted messages between devices that belong to the same trust group. Think of it as a postal service that carries sealed envelopes — it knows where to deliver them, but can't read what's inside.
 
@@ -8,21 +17,9 @@ The relay connects your devices to each other across the internet. It's part of 
 
 You need the relay running somewhere if you want your devices to find each other across the internet (e.g. your laptop at home and your phone on mobile data). If all your devices are on the same local network, you don't need a relay.
 
-### Option 1: Use a pre-built binary
+### Build and run
 
-Download the latest release for your platform from the [Releases](https://github.com/reality2-ai/r2-relay/releases) page.
-
-Then run it:
-
-```
-./r2-relay
-```
-
-That's it. The relay is now running on port 21042. Any R2-enabled tool (like [Notekeeper](https://github.com/reality2-ai/r2-notekeeper)) can connect to it at `ws://your-machine:21042/r2`.
-
-### Option 2: Build from source
-
-You'll need [Rust](https://rustup.rs) installed (the installer is one command on any platform).
+You'll need [Rust](https://rustup.rs) installed. The installer is one command on any platform (Linux, macOS, Windows).
 
 ```
 git clone https://github.com/reality2-ai/r2-relay.git
@@ -30,7 +27,9 @@ cd r2-relay
 cargo run --release
 ```
 
-### Option 3: Run on a server
+That's it. The relay is now running on port 21042. Open `http://localhost:21042` to see the status dashboard. Any R2-enabled tool (like [Notekeeper](https://github.com/reality2-ai/r2-notekeeper)) can connect at `ws://your-machine:21042/r2`.
+
+### Run on a server
 
 If you want the relay always available (so your devices can sync even when your computer is off), run it on a cheap server — a $5/month VPS, a Raspberry Pi, or any always-on machine.
 
