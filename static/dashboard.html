@@ -37,14 +37,14 @@
 
         /* Ripple effect on frame */
         .ripple {
-            position: absolute; border-radius: 50%;
+            position: absolute; top: 50%; left: 50%; border-radius: 50%;
             border: 2px solid var(--accent); opacity: 0;
-            pointer-events: none;
+            pointer-events: none; transform: translate(-50%, -50%);
             animation: ripple-out 0.8s ease-out forwards;
         }
         @keyframes ripple-out {
-            0% { width: 20px; height: 20px; top: 50%; left: 50%; margin-top: -10px; margin-left: -10px; opacity: 0.6; }
-            100% { width: 160px; height: 160px; top: 50%; left: 50%; margin-top: -80px; margin-left: -80px; opacity: 0; }
+            0% { width: 20px; height: 20px; opacity: 0.6; }
+            100% { width: 160px; height: 160px; opacity: 0; }
         }
 
         h1 { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
