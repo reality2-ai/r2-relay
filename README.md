@@ -61,7 +61,7 @@ The install script works the same way on a server as on your laptop.
 
 ### Checking it's working
 
-Open a browser and go to `http://your-machine:21042/health`. You should see `r2-relay ok`.
+Open a browser and go to `http://<your-ip>:21042`. You'll see the relay dashboard — a live view showing connections, trust groups, and frames being routed. The hexagon pulses each time a message passes through.
 
 ## Using the relay
 
