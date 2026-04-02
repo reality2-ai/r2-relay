@@ -55,6 +55,12 @@ pub struct RelayState {
     next_conn_id: AtomicU64,
     pub buffer_size: usize,
     pub max_connections: usize,
+    /// Total frames routed since startup.
+    pub frames_routed: AtomicU64,
+    /// Total connections accepted since startup.
+    pub connections_total: AtomicU64,
+    /// Startup time.
+    pub started_at: Instant,
 }
 
 impl RelayState {
@@ -64,6 +70,9 @@ impl RelayState {
             next_conn_id: AtomicU64::new(1),
             buffer_size,
             max_connections,
+            frames_routed: AtomicU64::new(0),
+            connections_total: AtomicU64::new(0),
+            started_at: Instant::now(),
         })
     }
 

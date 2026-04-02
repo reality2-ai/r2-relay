@@ -19,6 +19,7 @@ pub async fn handle_connection(mut socket: WebSocket, state: Arc<RelayState>) {
         None => return, // handshake failed, socket already closed
     };
 
+    state.connections_total.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     log::info!(
         "[{}] device {} joined tg:{}",
         conn_id,
@@ -60,6 +61,7 @@ pub async fn handle_connection(mut socket: WebSocket, state: Arc<RelayState>) {
                         if let Some(tg) = groups.get_mut(&trust_group) {
                             tg.buffer.push(data.to_vec(), now_secs);
                             tg.broadcast(conn_id, &data);
+                            state.frames_routed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                         }
                     }
                     Some(Ok(Message::Text(text))) => {

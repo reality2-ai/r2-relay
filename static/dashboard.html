@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R2 Relay</title>
+    <link rel="icon" type="image/svg+xml" href="/relay.svg">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e12; --surface: #16161d; --surface2: #1e1e28;
+            --accent: #d4a853; --accent-glow: #d4a85322; --accent-bright: #e8c06a;
+            --green: #6ecb8b; --text: #d8d4cf; --text-dim: #706c65; --text-faint: #4a4740;
+            --sans: 'DM Sans', -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', 'SF Mono', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--sans); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+
+        .container { text-align: center; max-width: 480px; padding: 24px; }
+
+        /* Hexagon animation area */
+        .hex-container {
+            position: relative; width: 200px; height: 200px; margin: 0 auto 32px;
+        }
+        .hex-svg { width: 200px; height: 200px; }
+        .hex-outline {
+            fill: none; stroke: var(--accent); stroke-width: 14;
+            stroke-linejoin: round; stroke-dasharray: 40,20;
+            opacity: 0.4; transition: opacity 0.3s, stroke 0.3s;
+        }
+        .hex-outline.active {
+            opacity: 0.9; stroke: var(--accent-bright);
+        }
+        .hex-centre { fill: var(--accent); opacity: 0.3; transition: opacity 0.3s, r 0.3s; }
+        .hex-centre.active { opacity: 0.8; r: 12; }
+
+        /* Ripple effect on frame */
+        .ripple {
+            position: absolute; border-radius: 50%;
+            border: 2px solid var(--accent); opacity: 0;
+            pointer-events: none;
+            animation: ripple-out 0.8s ease-out forwards;
+        }
+        @keyframes ripple-out {
+            0% { width: 20px; height: 20px; top: 50%; left: 50%; margin-top: -10px; margin-left: -10px; opacity: 0.6; }
+            100% { width: 160px; height: 160px; top: 50%; left: 50%; margin-top: -80px; margin-left: -80px; opacity: 0; }
+        }
+
+        h1 { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+        .subtitle { font-size: 13px; color: var(--text-faint); margin-bottom: 32px; }
+
+        /* Stats */
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+        .stat {
+            background: var(--surface); border: 1px solid rgba(212,168,83,0.06);
+            border-radius: 10px; padding: 16px;
+        }
+        .stat-value {
+            font-family: var(--mono); font-size: 28px; font-weight: 700;
+            color: var(--text); line-height: 1;
+        }
+        .stat-label { font-size: 11px; color: var(--text-faint); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .stat-row {
+            display: flex; justify-content: space-between; padding: 8px 0;
+            font-size: 13px; border-bottom: 1px solid rgba(212,168,83,0.04);
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row .label { color: var(--text-dim); }
+        .stat-row .value { font-family: var(--mono); font-size: 13px; color: var(--text); }
+
+        .status-dot {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            background: var(--green); margin-right: 6px; vertical-align: middle;
+        }
+        .status { font-size: 12px; color: var(--text-dim); }
+
+        footer { font-size: 11px; color: var(--text-faint); margin-top: 24px; }
+        footer a { color: var(--text-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="hex-container" id="hex-container">
+        <svg class="hex-svg" viewBox="0 0 512 512">
+            <path id="hex-outline" class="hex-outline"
+                  d="M256 72L400 156V324L256 408L112 324V156Z"/>
+            <circle id="hex-centre" class="hex-centre" cx="256" cy="240" r="8"/>
+        </svg>
+    </div>
+
+    <h1>R2 Relay</h1>
+    <p class="subtitle"><span class="status-dot" id="status-dot"></span><span id="status-text">connecting...</span></p>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="stat-connections">-</div>
+            <div class="stat-label">Connections</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="stat-groups">-</div>
+            <div class="stat-label">Trust Groups</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="stat-frames">-</div>
+            <div class="stat-label">Frames Routed</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="stat-uptime">-</div>
+            <div class="stat-label">Uptime</div>
+        </div>
+    </div>
+
+    <footer>
+        <a href="https://reality2-ai.github.io">Reality2</a> &middot;
+        <a href="https://github.com/reality2-ai/r2-relay">Source</a>
+    </footer>
+</div>
+
+<script>
+    let lastFrames = 0;
+
+    function formatUptime(secs) {
+        if (secs < 60) return secs + 's';
+        if (secs < 3600) return Math.floor(secs / 60) + 'm';
+        if (secs < 86400) return Math.floor(secs / 3600) + 'h ' + Math.floor((secs % 3600) / 60) + 'm';
+        return Math.floor(secs / 86400) + 'd ' + Math.floor((secs % 86400) / 3600) + 'h';
+    }
+
+    function formatNumber(n) {
+        if (n < 1000) return String(n);
+        if (n < 1000000) return (n / 1000).toFixed(1) + 'K';
+        return (n / 1000000).toFixed(1) + 'M';
+    }
+
+    function pulse() {
+        // Flash the hexagon
+        const outline = document.getElementById('hex-outline');
+        const centre = document.getElementById('hex-centre');
+        outline.classList.add('active');
+        centre.classList.add('active');
+        setTimeout(() => { outline.classList.remove('active'); centre.classList.remove('active'); }, 300);
+
+        // Spawn a ripple
+        const container = document.getElementById('hex-container');
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        container.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 800);
+    }
+
+    async function poll() {
+        try {
+            const resp = await fetch('/stats');
+            const data = await resp.json();
+
+            document.getElementById('stat-connections').textContent = data.connections;
+            document.getElementById('stat-groups').textContent = data.trust_groups;
+            document.getElementById('stat-frames').textContent = formatNumber(data.frames_routed);
+            document.getElementById('stat-uptime').textContent = formatUptime(data.uptime_secs);
+
+            document.getElementById('status-text').textContent = 'running';
+            document.getElementById('status-dot').style.background = 'var(--green)';
+
+            // Pulse if frames changed
+            if (data.frames_routed > lastFrames && lastFrames > 0) {
+                const delta = data.frames_routed - lastFrames;
+                for (let i = 0; i < Math.min(delta, 3); i++) {
+                    setTimeout(() => pulse(), i * 200);
+                }
+            }
+            lastFrames = data.frames_routed;
+        } catch {
+            document.getElementById('status-text').textContent = 'unreachable';
+            document.getElementById('status-dot').style.background = 'var(--text-faint)';
+        }
+    }
+
+    poll();
+    setInterval(poll, 2000);
+</script>
+
+</body>
+</html>

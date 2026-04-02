@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1c1c21"/>
+  <!-- Dashed hexagon — transparent, things pass through -->
+  <path d="M256 72L400 156V324L256 408L112 324V156Z"
+        fill="none" stroke="#d4a853" stroke-width="18"
+        stroke-linejoin="round" stroke-dasharray="40,20" opacity="0.85"/>
+  <!-- Centre dot — the relay node -->
+  <circle cx="256" cy="240" r="10" fill="#d4a853" opacity="0.5"/>
+</svg>
