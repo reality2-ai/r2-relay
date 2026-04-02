@@ -17,9 +17,29 @@ The relay connects your devices to each other across the internet — without de
 
 You need the relay running somewhere if you want your devices to find each other across the internet (e.g. your laptop at home and your phone on mobile data). If all your devices are on the same local network, you don't need a relay.
 
-### Build and run
+### Install (Linux or macOS)
 
-You'll need [Rust](https://rustup.rs) installed. The installer is one command on any platform (Linux, macOS, Windows).
+One script handles everything — builds the binary, installs it, and sets it up to start automatically on boot:
+
+```
+git clone https://github.com/reality2-ai/r2-relay.git
+cd r2-relay
+./install.sh
+```
+
+If Rust isn't installed, the script installs it for you.
+
+On **Linux**, it creates a systemd service. On **macOS**, it creates a launchd agent. Either way, the relay starts immediately and restarts automatically if it stops.
+
+To remove everything (service + binary):
+
+```
+./install.sh --remove
+```
+
+### Just build and run (no service)
+
+If you'd rather run it manually:
 
 ```
 git clone https://github.com/reality2-ai/r2-relay.git
@@ -27,39 +47,17 @@ cd r2-relay
 cargo run --release
 ```
 
-That's it. The relay is now running on port 21042. Open `http://localhost:21042` to see the status dashboard. Any R2-enabled tool (like [Notekeeper](https://github.com/reality2-ai/r2-notekeeper)) can connect at `ws://your-machine:21042/r2`.
-
 ### Run on a server
 
-If you want the relay always available (so your devices can sync even when your computer is off), run it on a cheap server — a $5/month VPS, a Raspberry Pi, or any always-on machine.
+For the relay to be always available (so your devices can sync even when your computer is off), run it on a cheap server — a $5/month VPS, a Raspberry Pi, or any always-on machine:
 
-1. Build the binary: `cargo build --release`
-2. Copy `target/release/r2-relay` to the server
-3. Run it: `./r2-relay --port 21042`
-
-To keep it running after you log out, use systemd (Linux) or any process manager:
-
-```ini
-# /etc/systemd/system/r2-relay.service
-[Unit]
-Description=R2 Relay
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/r2-relay --port 21042
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+```
+git clone https://github.com/reality2-ai/r2-relay.git
+cd r2-relay
+./install.sh
 ```
 
-Then:
-```
-sudo cp target/release/r2-relay /usr/local/bin/
-sudo systemctl enable r2-relay
-sudo systemctl start r2-relay
-```
+The install script works the same way on a server as on your laptop.
 
 ### Checking it's working
 
