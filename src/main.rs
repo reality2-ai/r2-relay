@@ -7,11 +7,12 @@ use std::net::SocketAddr;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::extract::WebSocketUpgrade;
 use axum::http::header;
 use axum::response::{Html, IntoResponse, Response};
-use axum::routing::get;
+use axum::routing::{get, post};
+use axum::Json;
 use axum::Router;
 use clap::Parser;
 use tower_http::cors::CorsLayer;
@@ -70,6 +71,41 @@ async fn dashboard() -> Html<&'static str> {
     Html(include_str!("../static/dashboard.html"))
 }
 
+/// Register a word code mapping.
+async fn register_word_code(
+    State(state): State<Arc<RelayState>>,
+    Json(body): Json<serde_json::Value>,
+) -> Response {
+    let words = body.get("words").and_then(|v| v.as_str()).unwrap_or("");
+    let tg_hash = body.get("tg_hash").and_then(|v| v.as_str()).unwrap_or("");
+    let join_code = body.get("join_code").and_then(|v| v.as_str()).unwrap_or("");
+
+    if words.is_empty() || tg_hash.is_empty() || join_code.is_empty() {
+        return (axum::http::StatusCode::BAD_REQUEST, "missing fields").into_response();
+    }
+
+    state.register_word_code(words.to_string(), tg_hash.to_string(), join_code.to_string()).await;
+    log::info!("word code registered: {} -> tg:{}", words, &tg_hash[..8.min(tg_hash.len())]);
+
+    ([(header::CONTENT_TYPE, "application/json")], r#"{"ok":true}"#).into_response()
+}
+
+/// Look up a word code.
+async fn lookup_word_code(
+    State(state): State<Arc<RelayState>>,
+    Path(words): Path<String>,
+) -> Response {
+    match state.lookup_word_code(&words).await {
+        Some((tg_hash, join_code)) => {
+            let json = format!(r#"{{"tg_hash":"{}","join_code":"{}"}}"#, tg_hash, join_code);
+            ([(header::CONTENT_TYPE, "application/json")], json).into_response()
+        }
+        None => {
+            (axum::http::StatusCode::NOT_FOUND, "word code not found or expired").into_response()
+        }
+    }
+}
+
 async fn relay_svg() -> Response {
     let svg = include_str!("../static/relay.svg");
     ([(header::CONTENT_TYPE, "image/svg+xml")], svg).into_response()
@@ -88,6 +124,8 @@ async fn main() {
         .route("/health", get(health))
         .route("/stats", get(stats_json))
         .route("/relay.svg", get(relay_svg))
+        .route("/word-code", post(register_word_code))
+        .route("/word-code/{words}", get(lookup_word_code))
         .layer(CorsLayer::permissive())
         .with_state(state.clone());
 

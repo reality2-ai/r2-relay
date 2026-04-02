@@ -51,6 +51,15 @@ impl TrustGroupState {
     }
 }
 
+/// Temporary word code registration (5-minute TTL).
+pub struct WordCodeEntry {
+    pub tg_hash: String,
+    pub join_code: String,
+    pub created_at: Instant,
+}
+
+const WORD_CODE_TTL_SECS: u64 = 300; // 5 minutes
+
 /// Rate limit entry per IP.
 struct RateEntry {
     count: u32,
@@ -71,6 +80,8 @@ pub struct RelayState {
     pub started_at: Instant,
     /// Rate limiting per IP (max 5 connections per minute).
     rate_limits: Mutex<HashMap<IpAddr, RateEntry>>,
+    /// Temporary word code → join info mappings (5-minute TTL).
+    pub word_codes: Mutex<HashMap<String, WordCodeEntry>>,
 }
 
 /// Max connection attempts per IP per window.
@@ -89,6 +100,7 @@ impl RelayState {
             connections_total: AtomicU64::new(0),
             started_at: Instant::now(),
             rate_limits: Mutex::new(HashMap::new()),
+            word_codes: Mutex::new(HashMap::new()),
         })
     }
 
@@ -110,6 +122,32 @@ impl RelayState {
 
         entry.count += 1;
         entry.count <= RATE_LIMIT_MAX
+    }
+
+    /// Register a word code mapping (5-minute TTL, single-use).
+    pub async fn register_word_code(&self, words: String, tg_hash: String, join_code: String) {
+        let mut codes = self.word_codes.lock().await;
+        // Clean expired entries
+        let now = Instant::now();
+        codes.retain(|_, v| now.duration_since(v.created_at).as_secs() < WORD_CODE_TTL_SECS);
+        // Register
+        codes.insert(words, WordCodeEntry {
+            tg_hash,
+            join_code,
+            created_at: now,
+        });
+    }
+
+    /// Look up and consume a word code (single-use).
+    pub async fn lookup_word_code(&self, words: &str) -> Option<(String, String)> {
+        let mut codes = self.word_codes.lock().await;
+        let now = Instant::now();
+        if let Some(entry) = codes.remove(words) {
+            if now.duration_since(entry.created_at).as_secs() < WORD_CODE_TTL_SECS {
+                return Some((entry.tg_hash, entry.join_code));
+            }
+        }
+        None
     }
 
     pub fn next_conn_id(&self) -> ConnId {
