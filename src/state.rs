@@ -13,6 +13,7 @@ pub type TrustGroupHash = [u8; 8];
 pub type ConnId = u64;
 
 /// A connected device.
+#[allow(dead_code)]
 pub struct Connection {
     pub conn_id: ConnId,
     pub device_id: String,
