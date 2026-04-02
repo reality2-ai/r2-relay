@@ -246,7 +246,7 @@ async fn handshake(
                 return None;
             }
         }
-    } else if trust_group_hex.len() >= 3 && trust_group_hex.len() <= 6 {
+    } else if trust_group_hex.len() >= 2 && trust_group_hex.len() <= 6 {
         // Prefix match (word code HELLO) - find matching active group
         let prefix = &trust_group_hex;
         let groups = state.groups.read().await;
