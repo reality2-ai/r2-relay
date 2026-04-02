@@ -1,0 +1,29 @@
+[package]
+name = "r2-relay"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "R2 Transport Relay — routes encrypted R2-WIRE frames by trust group hash"
+repository = "https://github.com/reality2-ai/r2-relay"
+keywords = ["mesh", "relay", "r2", "websocket", "trust-group"]
+categories = ["network-programming"]
+
+[[bin]]
+name = "r2-relay"
+path = "src/main.rs"
+
+[dependencies]
+axum = { version = "0.8", features = ["ws"] }
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors"] }
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ed25519-dalek = { version = "2.1", default-features = false, features = ["std"] }
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+opt-level = 2
+lto = true
+strip = true
