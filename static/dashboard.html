@@ -35,11 +35,15 @@
         .hex-centre { fill: var(--accent); opacity: 0.3; transition: opacity 0.3s, r 0.3s; }
         .hex-centre.active { opacity: 0.8; r: 12; }
 
-        /* Ripple effect on frame */
+        /* Ripple effect — single reusable element */
         .ripple {
             position: absolute; top: 50%; left: 50%; border-radius: 50%;
             border: 2px solid var(--accent); opacity: 0;
             pointer-events: none; transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            transition: none;
+        }
+        .ripple.active {
             animation: ripple-out 0.8s ease-out forwards;
         }
         @keyframes ripple-out {
@@ -90,6 +94,7 @@
                   d="M256 72L400 156V324L256 408L112 324V156Z"/>
             <circle id="hex-centre" class="hex-centre" cx="256" cy="240" r="8"/>
         </svg>
+        <div class="ripple" id="ripple"></div>
     </div>
 
     <h1>R2 Relay</h1>
@@ -136,20 +141,27 @@
         return (n / 1000000).toFixed(1) + 'M';
     }
 
+    let pulseTimeout = null;
+
     function pulse() {
         // Flash the hexagon
         const outline = document.getElementById('hex-outline');
         const centre = document.getElementById('hex-centre');
+        const ripple = document.getElementById('ripple');
+
         outline.classList.add('active');
         centre.classList.add('active');
-        setTimeout(() => { outline.classList.remove('active'); centre.classList.remove('active'); }, 300);
 
-        // Spawn a ripple
-        const container = document.getElementById('hex-container');
-        const ripple = document.createElement('div');
-        ripple.className = 'ripple';
-        container.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 800);
+        // Reset and retrigger ripple animation
+        ripple.classList.remove('active');
+        void ripple.offsetWidth; // force reflow to restart animation
+        ripple.classList.add('active');
+
+        if (pulseTimeout) clearTimeout(pulseTimeout);
+        pulseTimeout = setTimeout(() => {
+            outline.classList.remove('active');
+            centre.classList.remove('active');
+        }, 300);
     }
 
     async function poll() {
@@ -165,12 +177,9 @@
             document.getElementById('status-text').textContent = 'running';
             document.getElementById('status-dot').style.background = 'var(--green)';
 
-            // Pulse if frames changed
+            // Pulse once if any frames were routed since last poll
             if (data.frames_routed > lastFrames && lastFrames > 0) {
-                const delta = data.frames_routed - lastFrames;
-                for (let i = 0; i < Math.min(delta, 3); i++) {
-                    setTimeout(() => pulse(), i * 200);
-                }
+                pulse();
             }
             lastFrames = data.frames_routed;
         } catch {
