@@ -9,9 +9,9 @@
   Part of <a href="https://reality2-ai.github.io">Reality2</a>.
 </p>
 
-The relay connects your devices to each other across the internet — without depending on anyone else's servers or services.
+The relay connects your devices to each other across the internet - without depending on anyone else's servers or services.
 
-**The relay never sees your data.** It forwards encrypted messages between devices that belong to the same trust group. Think of it as a postal service that carries sealed envelopes — it knows where to deliver them, but can't read what's inside.
+**The relay never sees your data.** It forwards encrypted messages between devices that belong to the same trust group. Think of it as a postal service that carries sealed envelopes - it knows where to deliver them, but can't read what's inside.
 
 ## Getting Started
 
@@ -19,7 +19,7 @@ You need the relay running somewhere if you want your devices to find each other
 
 ### Install (Linux or macOS)
 
-One script handles everything — builds the binary, installs it, and sets it up to start automatically on boot:
+One script handles everything - builds the binary, installs it, and sets it up to start automatically on boot:
 
 ```
 git clone https://github.com/reality2-ai/r2-relay.git
@@ -49,7 +49,7 @@ cargo run --release
 
 ### Run on a server
 
-For the relay to be always available (so your devices can sync even when your computer is off), run it on a cheap server — a $5/month VPS, a Raspberry Pi, or any always-on machine:
+For the relay to be always available (so your devices can sync even when your computer is off), run it on a cheap server - a $5/month VPS, a Raspberry Pi, or any always-on machine:
 
 ```
 git clone https://github.com/reality2-ai/r2-relay.git
@@ -61,7 +61,7 @@ The install script works the same way on a server as on your laptop.
 
 ### Checking it's working
 
-Open a browser and go to `http://<your-ip>:21042`. You'll see the relay dashboard — a live view showing connections, trust groups, and frames being routed. The hexagon pulses each time a message passes through.
+Open a browser and go to `http://<your-ip>:21042`. You'll see the relay dashboard - a live view showing connections, trust groups, and frames being routed. The hexagon pulses each time a message passes through.
 
 ## Using the relay
 
@@ -82,9 +82,9 @@ wss://relay.yourdomain.com/r2
 The relay is deliberately simple. When a device connects, it says which trust group it belongs to. The relay puts it in a room with all other devices from the same trust group. Messages sent by any device in the room are forwarded to every other device in that room.
 
 - **Multiple trust groups** share one relay without seeing each other
-- **Your data is encrypted** before it reaches the relay — the relay can't read it
+- **Your data is encrypted** before it reaches the relay - the relay can't read it
 - **If the relay restarts**, devices reconnect automatically within seconds
-- **If the relay goes down**, your devices still work locally — they just can't reach each other across the internet until it's back
+- **If the relay goes down**, your devices still work locally - they just can't reach each other across the internet until it's back
 
 ## Options
 
@@ -105,7 +105,7 @@ There is a public community relay available for anyone to use:
 wss://relay.reality2.ai/r2
 ```
 
-This relay is untrusted by design — it forwards encrypted bytes and cannot read your data. Use it to get started without setting up your own. You can switch to your own relay at any time.
+This relay is untrusted by design - it forwards encrypted bytes and cannot read your data. Use it to get started without setting up your own. You can switch to your own relay at any time.
 
 ## Deploy to a VPS
 
@@ -123,7 +123,7 @@ A **Dockerfile** is also included for container deployments.
 
 ## For developers
 
-The relay implements the R2-TRANSPORT-RELAY specification. It's a single Rust binary with minimal dependencies (axum, tokio, ed25519-dalek). No R2 protocol crates required — it treats all messages as opaque encrypted bytes.
+The relay implements the R2-TRANSPORT-RELAY specification. It's a single Rust binary with minimal dependencies (axum, tokio, ed25519-dalek). No R2 protocol crates required - it treats all messages as opaque encrypted bytes.
 
 **Protocol:** JSON handshake (HELLO/WELCOME) with Ed25519 signature verification, then binary WebSocket frames forwarded by trust group hash. Heartbeat timeout at 90 seconds.
 
