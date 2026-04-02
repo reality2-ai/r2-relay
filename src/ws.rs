@@ -232,17 +232,46 @@ async fn handshake(
         return None;
     }
 
-    // Parse trust group hash.
-    let tg_hash_bytes = match hex_decode(&trust_group_hex) {
-        Some(b) if b.len() == 8 => {
-            let mut h = [0u8; 8];
-            h.copy_from_slice(&b);
-            h
+    // Parse trust group hash (exact 8 bytes or 3-hex-char prefix).
+    let tg_hash_bytes = if trust_group_hex.len() == 16 {
+        // Exact match (standard HELLO)
+        match hex_decode(&trust_group_hex) {
+            Some(b) if b.len() == 8 => {
+                let mut h = [0u8; 8];
+                h.copy_from_slice(&b);
+                h
+            }
+            _ => {
+                close_with(socket, CLOSE_AUTH_FAILED, "invalid trust_group").await;
+                return None;
+            }
         }
-        _ => {
-            close_with(socket, CLOSE_AUTH_FAILED, "invalid trust_group").await;
-            return None;
+    } else if trust_group_hex.len() >= 3 && trust_group_hex.len() <= 6 {
+        // Prefix match (word code HELLO) - find matching active group
+        let prefix = &trust_group_hex;
+        let groups = state.groups.read().await;
+        let matches: Vec<TrustGroupHash> = groups.keys()
+            .filter(|h| hex::encode(*h).starts_with(prefix))
+            .copied()
+            .collect();
+        drop(groups);
+
+        match matches.len() {
+            0 => {
+                log::warn!("prefix {} matched no active trust groups", prefix);
+                close_with(socket, CLOSE_AUTH_FAILED, "no matching trust group").await;
+                return None;
+            }
+            1 => matches[0],
+            _ => {
+                log::warn!("prefix {} matched {} trust groups (ambiguous)", prefix, matches.len());
+                close_with(socket, CLOSE_AUTH_FAILED, "ambiguous trust group prefix").await;
+                return None;
+            }
         }
+    } else {
+        close_with(socket, CLOSE_AUTH_FAILED, "invalid trust_group length").await;
+        return None;
     };
 
     // Check connection limits.
@@ -250,6 +279,11 @@ async fn handshake(
         close_with(socket, CLOSE_TOO_MANY, "too many connections").await;
         return None;
     }
+
+    // Note: rate limiting is checked per-IP at the transport layer.
+    // For WebSocket upgrades without IP extraction, the rate limit
+    // is applied by the reverse proxy (nginx/caddy) or can be added
+    // here when axum's ConnectInfo extractor is wired in.
 
     let conn_id = state.next_conn_id();
 
