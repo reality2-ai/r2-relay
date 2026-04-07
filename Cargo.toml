@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "R2 Transport Relay — routes encrypted R2-WIRE frames by trust group hash"
-repository = "https://github.com/reality2-ai/r2-relay"
+repository = "https://github.com/reality2-ai/r2-hive"
 keywords = ["mesh", "relay", "r2", "websocket", "trust-group"]
 categories = ["network-programming"]
 
